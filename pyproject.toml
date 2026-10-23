@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "honeysiem"
+version = "0.1.0"
+description = "Mini-SIEM for SSH honeypots: ingest Cowrie and auth.log data, detect attacks mapped to MITRE ATT&CK, and generate an interactive dashboard."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ahmed Fikry" }]
+keywords = ["honeypot", "siem", "cowrie", "mitre-attack", "threat-detection", "blue-team"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+honeysiem = "honeysiem.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+honeysiem = ["templates/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

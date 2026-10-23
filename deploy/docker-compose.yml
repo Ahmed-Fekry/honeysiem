@@ -1,0 +1,22 @@
+# Cowrie SSH honeypot. Deploy ONLY on an isolated, disposable VM (see deploy/README.md).
+services:
+  cowrie:
+    image: cowrie/cowrie:latest
+    container_name: cowrie
+    restart: unless-stopped
+    ports:
+      - "22:2222"   # attackers hit port 22; move your real sshd to another port first
+    volumes:
+      - cowrie-var:/cowrie/cowrie-git/var
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    mem_limit: 512m
+    pids_limit: 256
+
+volumes:
+  cowrie-var:

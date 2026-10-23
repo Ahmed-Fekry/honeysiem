@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #0b1020; --panel: #121a2e; --panel-2: #18223b; --border: #24304d;
+    --text: #e6ebf5; --muted: #8b97b3; --accent: #4fd1c5; --accent-2: #f6ad55;
+    --critical: #f56565; --high: #ed8936; --medium: #ecc94b; --low: #63b3ed;
+    --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px;
+           border-bottom: 1px solid var(--border); padding-bottom: 18px; margin-bottom: 24px; }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+  h2 { margin: 0 0 14px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .meta { color: var(--muted); font-size: 13px; text-align: right; }
+  .kpis { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+  @media (max-width: 1100px) { .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kpi { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .kpi .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .kpi .l { color: var(--muted); font-size: 12px; }
+  .kpi.hot .v { color: var(--critical); }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; min-width: 0; }
+  .full { grid-column: 1 / -1; }
+  .chart { position: relative; height: 260px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .scroll { overflow-x: auto; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+           text-transform: uppercase; letter-spacing: .04em; color: #0b1020; }
+  .sev-critical { background: var(--critical); } .sev-high { background: var(--high); }
+  .sev-medium { background: var(--medium); } .sev-low { background: var(--low); }
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .filters button { background: var(--panel-2); color: var(--text); border: 1px solid var(--border);
+                    border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 12px; cursor: pointer; }
+  .filters button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  .evidence { margin: 4px 0 0; padding: 0; list-style: none; color: var(--muted); }
+  .evidence li { font-family: var(--mono); font-size: 12px; word-break: break-all; }
+  a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+  .matrix { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .tactic h3 { margin: 0 0 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .tech { display: block; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px;
+          background: var(--panel-2); color: var(--muted); font-size: 12px; }
+  .tech b { display: block; color: var(--text); font-family: var(--mono); font-size: 12px; }
+  .tech.hit { border-color: var(--accent-2); background: rgba(246, 173, 85, .12); color: var(--text); }
+  .tech.hit b { color: var(--accent-2); }
+  .tech small { color: var(--muted); }
+  ol.cmds { margin: 0; padding-left: 0; list-style: none; }
+  ol.cmds li { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  ol.cmds li:last-child { border-bottom: 0; }
+  ol.cmds code { font-family: var(--mono); font-size: 12.5px; word-break: break-all; color: var(--accent); }
+  .empty { color: var(--muted); font-style: italic; }
+  footer { color: var(--muted); font-size: 12px; margin-top: 28px; text-align: center; }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } .meta { text-align: left; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Honey<span>SIEM</span> threat report</h1>
+      <div class="meta" style="text-align:left" id="period"></div>
+    </div>
+    <div class="meta" id="generated"></div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="grid">
+    <section class="panel full">
+      <h2>Login attempts over time</h2>
+      <div class="chart"><canvas id="timeline" aria-label="Login attempts over time"></canvas></div>
+    </section>
+    <section class="panel">
+      <h2>Top usernames tried</h2>
+      <div class="chart"><canvas id="users" aria-label="Top usernames"></canvas></div>
+    </section>
+    <section class="panel">
+      <h2>Top passwords tried</h2>
+      <div class="chart"><canvas id="passwords" aria-label="Top passwords"></canvas></div>
+    </section>
+    <section class="panel full">
+      <h2>MITRE ATT&amp;CK coverage</h2>
+      <div class="matrix" id="matrix"></div>
+    </section>
+    <section class="panel full">
+      <h2>Alerts</h2>
+      <div class="filters" id="filters"></div>
+      <div class="scroll"><table id="alerts">
+        <thead><tr><th>Severity</th><th>Detection</th><th>Technique</th><th>Source IP</th><th class="num">Events</th><th>First seen (UTC)</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+    <section class="panel">
+      <h2>Top attacking IPs</h2>
+      <div class="scroll"><table id="ips">
+        <thead><tr><th>IP</th><th class="num">Login attempts</th><th class="num">Successes</th><th class="num">Alerts</th><th>Worst</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+    <section class="panel">
+      <h2>Top commands after login</h2>
+      <ol class="cmds" id="cmds"></ol>
+    </section>
+  </div>
+  <footer>Generated by HoneySIEM. All attacker-supplied strings are rendered as plain text.</footer>
+</div>
+
+<script id="report-data" type="application/json">{{DATA}}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function () {
+  "use strict";
+  const data = JSON.parse(document.getElementById("report-data").textContent);
+  const css = getComputedStyle(document.documentElement);
+  const color = (name) => css.getPropertyValue(name).trim();
+  const fmt = new Intl.NumberFormat("en");
+
+  // Builds DOM nodes. Text is always assigned via textContent, never innerHTML.
+  function el(tag, props, children) {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(props || {})) {
+      if (k === "text") node.textContent = v;
+      else if (k === "className") node.className = v;
+      else node.setAttribute(k, v);
+    }
+    for (const c of children || []) node.append(c);
+    return node;
+  }
+  const when = (iso) => iso ? iso.replace("T", " ").slice(0, 19) : "n/a";
+
+  document.getElementById("period").textContent =
+    "Observation window: " + when(data.period.start) + " to " + when(data.period.end) + " UTC";
+  document.getElementById("generated").textContent = "Generated " + when(data.generated_at) + " UTC";
+
+  const t = data.totals;
+  const kpis = [
+    ["Events", t.events], ["Unique source IPs", t.unique_ips], ["Failed logins", t.login_failed],
+    ["Successful logins", t.login_success, t.login_success > 0], ["Commands run", t.commands],
+    ["Payloads captured", t.downloads], ["Alerts", t.alerts],
+    ["Critical alerts", data.severity.critical, data.severity.critical > 0],
+  ];
+  const kpiBox = document.getElementById("kpis");
+  for (const [label, value, hot] of kpis) {
+    kpiBox.append(el("div", { className: "kpi" + (hot ? " hot" : "") }, [
+      el("div", { className: "v", text: fmt.format(value) }),
+      el("div", { className: "l", text: label }),
+    ]));
+  }
+
+  // ATT&CK matrix
+  const matrix = document.getElementById("matrix");
+  for (const tactic of data.tactics) {
+    const techs = data.techniques.filter((x) => x.tactic === tactic);
+    const col = el("div", { className: "tactic" }, [el("h3", { text: tactic })]);
+    for (const x of techs) {
+      const hit = x.alerts > 0;
+      col.append(el("a", { className: "tech" + (hit ? " hit" : ""), href: x.url, target: "_blank", rel: "noopener noreferrer" }, [
+        el("b", { text: x.id }), x.name,
+        el("br"), el("small", { text: hit ? x.alerts + " alert(s), " + x.ips + " IP(s)" : "not observed" }),
+      ]));
+    }
+    matrix.append(col);
+  }
+
+  // Alerts table with severity filter
+  const tbody = document.querySelector("#alerts tbody");
+  function renderAlerts(sev) {
+    tbody.replaceChildren();
+    const rows = data.alerts.filter((a) => sev === "all" || a.severity === sev);
+    if (!rows.length) {
+      tbody.append(el("tr", {}, [el("td", { colspan: "6", className: "empty", text: "No alerts." })]));
+      return;
+    }
+    for (const a of rows) {
+      tbody.append(el("tr", {}, [
+        el("td", {}, [el("span", { className: "badge sev-" + a.severity, text: a.severity })]),
+        el("td", {}, [
+          el("div", { text: a.title + " (" + a.rule_id + ")" }),
+          el("ul", { className: "evidence" }, a.evidence.map((ev) => el("li", { text: ev }))),
+        ]),
+        el("td", {}, [el("a", { href: a.technique_url, target: "_blank", rel: "noopener noreferrer", text: a.technique_id }),
+                      el("div", { className: "evidence", text: a.technique_name })]),
+        el("td", { className: "mono", text: a.src_ip }),
+        el("td", { className: "num", text: fmt.format(a.count) }),
+        el("td", { className: "mono", text: when(a.first_seen) }),
+      ]));
+    }
+  }
+  const filters = document.getElementById("filters");
+  const levels = ["all", "critical", "high", "medium", "low"];
+  for (const lvl of levels) {
+    const n = lvl === "all" ? data.alerts.length : data.severity[lvl];
+    const btn = el("button", { type: "button", "aria-pressed": String(lvl === "all"), text: lvl + " (" + n + ")" });
+    btn.addEventListener("click", () => {
+      filters.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      renderAlerts(lvl);
+    });
+    filters.append(btn);
+  }
+  renderAlerts("all");
+
+  // Top IPs
+  const ipBody = document.querySelector("#ips tbody");
+  for (const r of data.top_ips) {
+    ipBody.append(el("tr", {}, [
+      el("td", { className: "mono", text: r.ip }),
+      el("td", { className: "num", text: fmt.format(r.attempts) }),
+      el("td", { className: "num", text: fmt.format(r.successes) }),
+      el("td", { className: "num", text: fmt.format(r.alerts) }),
+      el("td", {}, r.worst ? [el("span", { className: "badge sev-" + r.worst, text: r.worst })] : []),
+    ]));
+  }
+
+  // Top commands
+  const cmds = document.getElementById("cmds");
+  if (!data.top_commands.length) cmds.append(el("li", { className: "empty", text: "No post-login commands recorded." }));
+  for (const c of data.top_commands) {
+    cmds.append(el("li", {}, [el("code", { text: c.value }), el("span", { className: "mono", text: "x" + c.count })]));
+  }
+
+  // Charts (skipped gracefully if the CDN is unreachable)
+  if (!window.Chart) return;
+  Chart.defaults.color = color("--muted");
+  Chart.defaults.borderColor = color("--border");
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.animation = false;
+  Chart.defaults.maintainAspectRatio = false;
+
+  const pts = data.timeline.points;
+  new Chart(document.getElementById("timeline"), {
+    type: "bar",
+    data: {
+      labels: pts.map((p) => data.timeline.bucket === "hour" ? p.t.slice(5, 13).replace("T", " ") + ":00" : p.t.slice(0, 10)),
+      datasets: [
+        { label: "Failed", data: pts.map((p) => p.failed), backgroundColor: color("--accent"), stack: "s" },
+        { label: "Successful", data: pts.map((p) => p.success), backgroundColor: color("--critical"), stack: "s" },
+      ],
+    },
+    options: {
+      plugins: { legend: { position: "top", align: "end" } },
+      scales: { x: { stacked: true, ticks: { maxTicksLimit: 14 }, grid: { display: false } }, y: { stacked: true, beginAtZero: true } },
+    },
+  });
+
+  function barChart(id, rows, fill) {
+    new Chart(document.getElementById(id), {
+      type: "bar",
+      data: { labels: rows.map((r) => r.value), datasets: [{ data: rows.map((r) => r.count), backgroundColor: fill, borderRadius: 4 }] },
+      options: {
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true }, y: { grid: { display: false }, ticks: { font: { family: color("--mono") } } } },
+      },
+    });
+  }
+  barChart("users", data.top_usernames, color("--accent"));
+  barChart("passwords", data.top_passwords, color("--accent-2"));
+})();
+</script>
+</body>
+</html>
