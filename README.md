@@ -10,7 +10,9 @@
 normalizes them into a SQLite event store, and runs detection rules mapped to
 **MITRE ATT&CK**. It turns the results into a self-contained dashboard that a SOC analyst can triage.
 
-![HoneySIEM dashboard](docs/dashboard.png)
+**[▶ Live demo dashboard](https://ahmed-fekry.github.io/honeysiem/)**, built from one week of simulated honeypot traffic.
+
+[![HoneySIEM dashboard](docs/dashboard.png)](https://ahmed-fekry.github.io/honeysiem/)
 
 ## What it found in the demo
 
